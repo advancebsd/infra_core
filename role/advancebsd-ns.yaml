@@ -1,0 +1,82 @@
+classes:
+  - vaccounts
+  - mailalias
+  - dynmotd
+  - rcconf
+  - loginconf
+  - timezone
+  - sudo
+  - profile::custom_facts
+  - profile::package
+  - profile::file
+  - crontab
+  - puppet_cron
+
+
+# purge all cron entries
+crontab::purge: true
+
+
+# local users/password/pubkey..
+accounts::user_list:
+  oleg:
+    purge_sshkeys: true
+    group: wheel
+    password: "%{hiera('users::password:oleg')}"
+    shell: /bin/csh
+    sshkeys:
+      - "%{hiera('users::publickey:oleg')}"
+  michael:
+    purge_sshkeys: true
+    group: wheel
+    password: "*"
+    shell: /bin/csh
+    sshkeys:
+      - "%{hiera('users::publickey:michael')}"
+
+
+rcconf::config:
+  syslogd_flags: "-ss"
+  cron_enable: "NO"
+
+
+profile::package::entries:
+  tmux:
+    ensure: "present"
+  doas:
+    ensure: "present"
+  sudo:
+    ensure: "present"
+  mc:
+    ensure: "present"
+  ca_root_nss:
+    ensure: "latest"
+
+
+sudo::configs:
+  "wheelgroup":
+    "content": "%wheel ALL=(ALL) NOPASSWD: ALL"
+    "priority": 10
+
+
+profile::file::entries:
+  '/usr/local/etc/pkg':
+    path: "/usr/local/etc/pkg"
+    ensure: directory
+  '/usr/local/etc/pkg/repos':
+    path: "/usr/local/etc/pkg/repos"
+    ensure: directory
+  '/usr/local/etc/pkg/repos/FreeBSD-latest.conf':
+    mode: "0755"
+    owner: "root"
+    group: "wheel"
+    content: |
+      # managed by Puppet
+      FreeBSD: { enabled: no }
+      FreeBSD-latest: {
+        url: "pkg+http://pkg.FreeBSD.org/${ABI}/latest",
+        mirror_type: "srv",
+        signature_type: "fingerprints",
+        fingerprints: "/usr/share/keys/pkg",
+        enabled: yes
+      }
