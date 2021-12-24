@@ -22,7 +22,7 @@ accounts::user_list:
   oleg:
     purge_sshkeys: true
     group: wheel
-    password: "%{hiera('users::password:oleg')}"
+#    password: "%{hiera('users::password:oleg')}"
     shell: /bin/csh
     sshkeys:
       - "%{hiera('users::publickey:oleg')}"
@@ -38,7 +38,9 @@ accounts::user_list:
 rcconf::config:
   syslogd_flags: "-ss"
   cron_enable: "NO"
-
+  rc_parallel_start: "YES"
+  sshd_enable: "YES"
+  sshd_flags: "-oUseDNS=no -oPrintMotd=no -oPermitRootLogin=no"
 
 profile::package::entries:
   tmux:
